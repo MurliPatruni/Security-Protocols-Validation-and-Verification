@@ -65,7 +65,8 @@ played_by B def=
 
   knows.  State  = 0 /\ Rcv({Na'.A}_Kb) /\ in(A.Ka', KeyRing)
        =|> State':= 2 /\ Nb':=new() /\ Snd({Na'.Nb'}_Ka')
-	              /\ witness(B,A,alice_bob_nb,Nb')
+                      /\ secret(Nb',snb,{B,A})
+	                     /\ witness(B,A,alice_bob_nb,Nb')
 
    cont.   State  = 2 /\ Rcv({Nb}_Kb)
        =|> State':= 3
