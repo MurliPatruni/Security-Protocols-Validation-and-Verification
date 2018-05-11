@@ -1,0 +1,93 @@
+%Fixed NSPK Protocol implemented with the xor operator
+
+role alice (A,B : agent, 
+            Ka,Kb : public_key,  
+            Snd,Rcv : channel (dy))
+
+played_by A def=
+
+  local State : nat, Na : text set, Nb : text
+	
+  init State:=0
+
+  transition 
+    1. State=0 /\ Rcv(start)
+	=|> State':=1 /\ Na':=new() /\ Snd({Na'.A}_Kb)
+                    /\ secret(Na',sna,{A,B})
+
+
+    2. State=1 /\ Rcv({Nb'.xor(Na,B)}_Ka) 
+	  =|> State':=2 /\ Snd({Nb'}_Kb)
+                    /\ witness (B,a,bob_alice_NA,Na)
+
+end role
+
+
+ 
+role bob (B,A : agent,  
+          Kb,Ka : public_key,  
+          Snd,Rcv : channel (dy))
+
+played_by B def=
+
+  local State : nat,
+        Na : text set, 
+        Nb : text
+	
+  init State:=0
+
+  transition 
+	 1. State=0 /\ Rcv({Na'.A}_Kb) 
+	  =|> State':=1 /\ Nb':=new() /\ Snd({Nb'.xor(Na',B)}_Ka)
+                    /\ wrequest(A,B,bob_alice_NA,Na)
+			/\ secret(Nb',snb,{B,A})
+  
+
+
+    2. State=1 /\ Rcv({Nb}_Kb) 
+	  =|> State':=2 
+      
+
+end role
+
+
+
+role fixednspkxor (A,B: agent,
+                   Ka, Kb: public_key, 
+                   Snd, Rcv: channel(dy) ) def=
+
+  composition
+    alice(A,B,Ka,Kb,Snd,Rcv) /\ 
+    bob(B,A,Kb,Ka,Snd,Rcv)
+
+end role
+
+
+
+role environment() def=
+
+  local Snd, Rcv: channel(dy)
+  
+  const a, b, i: agent,
+        ka, kb, ki: public_key,
+        sna,snb, bob_alice_NA: protocol_id
+
+  intruder_knowledge = {a,b,i,ka,kb,ki,inv(ki)}
+
+  composition
+    fixednspkxor(a,b,ka,kb,Snd,Rcv) /\
+    fixednspkxor(a,i,ka,ki,Snd,Rcv) 
+  
+  
+end role
+
+
+goal 
+     weak_authentication_on bob_alice_NA
+     secrecy_of sna,snb
+
+end goal
+
+
+
+environment()
