@@ -1,3 +1,11 @@
+%%%ESPECIFICATIONS OF THE PROBLEM%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Agents:A Client,B Service Delivery Server, S Authentication Server%%%%%
+
+%Objectives/Goals:establishing a session key between A and B,mutual authentication between A and B
+
+%Assumptions and Restrictions:A has a symmetric key shared with S,B has a symmetric key shared with S,only S can generate session keys,do not use timestamps,efficiency in the messages structure and their number
+
+
 %role of cliente interpreted by alice%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 role alice(A,S,B	:agent,
 	   Ka 		:symmetric_key,
@@ -6,9 +14,9 @@ role alice(A,S,B	:agent,
 played_by A
 def=
 	local State	: nat,
-	Na,Ns		: text,
+	Na,Ns,Nb	: text,
 	K		:symmetric_key,
-	X		:{symmetric_key.text.text}_symmetric_key
+	X		:{symmetric_key.text.text.text}_symmetric_key
 
 init State :=0
 
@@ -21,7 +29,7 @@ transition
 	2. State =2	/\ RCV_SA(A.B.{K'.Na.Ns'}_Ka.X')=|>
 	   State' :=4	/\ SND_BA(A.B.X'.{Na.Ns'}_K')
 
-	3. State =4	/\ RCV_BA(A.B.{Ns.Na}_K)=|>
+	3. State =4	/\ RCV_BA(A.B.{Ns.Nb.Na}_K)=|>
 	   State' :=6	/\ request(A,B,alice_bob_na,Na)
 
 end role
@@ -30,48 +38,56 @@ end role
 %%%role of the server authenticator %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 role server(A,S,B	:agent,
 	   Ka,Kb	:symmetric_key,
-	   SND_AS, RCV_AS :channel(dy))
+	   SND_AS, RCV_AS, RCV_BS :channel(dy))
 
 played_by S
 def=
 	local State	:nat,
-	Ns,Na		:text,
+	Ns,Na,Nb	:text,
 	K		:symmetric_key
 
 init State :=1
 
 transition
 
-	1. State =1 	/\ RCV_AS(A.B.{Na'}_Ka)=|>
+	1. State =1 	/\ RCV_AS(A.B.{Na'}_Ka)
+			/\ RCV_BS(A.B.{Nb'}_Kb)=|>
 	   State':=3	/\ Ns':=new()/\K':=new()
-			/\ SND_AS(A.B.{K'.Na'.Ns'}_Ka.{K'.Na'.Ns'}_Kb)
+			/\ SND_AS(A.B.{K'.Na'.Ns'}_Ka.{K'.Na'.Nb'.Ns'}_Kb)
 			/\ secret(K',k,{A,B,S})
 
 end role
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%role of service server interpreted by bob%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%role of service server interpreted by bob%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 role bob(A,S,B	:agent,
 	   Kb	:symmetric_key,
-	   SND_AB, RCV_AB :channel(dy))
+	   SND_AB, RCV_AB, SND_BS :channel(dy))
 
 played_by B
 def=
 
 	local State	:nat,
-	Ns,Na		:text,
+	Ns,Na,Nb	:text,
 	K		:symmetric_key
 
-init State:=5
+init State:=0
 
 transition
 
-	1.State =5 	/\ RCV_AB(A.B.{K'.Na'.Ns'}_Kb.{Na'.Ns'}_K')=|>
-	  State' :=7 	/\ SND_AB(A.B.{Ns'.Na'}_K')
+	1.State =0 	/\ RCV_AB(start)=|>
+	  State':=2	/\Nb':=new()
+			/\ SND_BS(A.B.{Nb'}_Kb)
+	
+
+	
+	3.State =5 	/\ RCV_AB(A.B.{K'.Na'.Nb'.Ns'}_Kb.{Na'.Ns'}_K')=|>
+	  State' :=7 	/\ SND_AB(A.B.{Ns'.Nb.Na'}_K')
 			/\ witness(B,A,alice_bob_na,Na')
 
 end role
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%role of session to allow only S can generate sessions%%%%%%%%%%%%%%%%%%%%%%%
 role session(A, S, B	:agent,
 	     Ka,Kb	:symmetric_key)
 
@@ -80,26 +96,27 @@ def=
 	  SSA,RSA,
 	  SBA,RBA,
 	  SAS,RAS,
-	  SAB,RAB   :channel(dy)
-
+	  SAB,RAB,
+	  SBS,RBS: channel(dy)
+	
 	composition
-
+	
 		alice (A,S,B,Ka,SSA,RSA,SBA,RBA)
-	     /\ server(A,S,B,Ka,Kb,SAS,RAS)
-	     /\ bob   (A,S,B,Kb,SAB,RAB)
+	     /\ server(A,S,B,Ka,Kb,SAS,RAS,RBS)
+	     /\ bob   (A,S,B,Kb,SAB,RAB,SBS)
 
 end role
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 role enviroment()
 def=
 	const a,b,s	:agent,
-	      ka,kb,ki  :symmetric_key,
+	      ka,kb,ki  :symmetric_key,	
 	      alice_bob_na, k :protocol_id
 
 	intruder_knowledge={a,b,s,ki}
 
 	composition
-
+		
 		   session(a,s,b,ka,kb)
 		/\ session(a,s,i,ka,ki)
 		/\ session(i,s,b,ki,kb)
@@ -107,9 +124,10 @@ def=
 end role
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-goal
+goal 
   secrecy_of k
   authentication_on alice_bob_na
 end goal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+enviroment()	 
 
-enviroment()
