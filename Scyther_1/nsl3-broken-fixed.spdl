@@ -10,9 +10,9 @@ protocol nsl3-broken(I,R)
 	role I
 	{
 		fresh ni: Nonce;
-		fresh nr: Nonce;
+		var nr: Nonce;
 
-		send_1(I,R, {ni,R}pk(R) );
+		send_1(I,R, {ni,I}pk(R) );
 		recv_2(R,I, {ni,nr,R}pk(I) );
 		send_3(I,R, {nr}pk(R) );
 
@@ -24,10 +24,10 @@ protocol nsl3-broken(I,R)
 	
 	role R
 	{
-		fresh ni: Nonce;
+		var ni: Nonce;
 		fresh nr: Nonce;
 
-		recv_1(I,R, {ni,R}pk(R) );
+		recv_1(I,R, {ni,I}pk(R) );
 		send_2(R,I, {ni,nr,R}pk(I) );
 		recv_3(I,R, {nr}pk(R) );
 

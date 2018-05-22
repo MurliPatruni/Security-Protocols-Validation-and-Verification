@@ -4,9 +4,10 @@
  */
 
 // The protocol description
-
 usertype String;
 const V1: String;
+
+
 protocol nsl3-broken(I,R)
 {
 	role I
@@ -15,7 +16,7 @@ protocol nsl3-broken(I,R)
 		var nr: Nonce;
 
 		send_1(I,R,V1, {ni,R}pk(R) );
-		recv_2(R,I, V1,{ni,nr,R}pk(I) );
+		recv_2(R,I,V1, {ni,nr,R}pk(I) );
 		send_3(I,R, V1,{nr}pk(R) );
 
 		claim_i1(I,Secret,ni);
@@ -29,9 +30,9 @@ protocol nsl3-broken(I,R)
 		var ni: Nonce;
 		fresh nr: Nonce;
 
-		recv_1(I,R, V1, {ni,R}pk(R) );
-		send_2(R,I, V1, {ni,nr,R}pk(I) );
-		recv_3(I,R, V1, {nr}pk(R) );
+		recv_1(I,R,V1, {ni,R}pk(R) );
+		send_2(R,I, V1,{ni,nr,R}pk(I) );
+		recv_3(I,R, V1,{nr}pk(R) );
 
 		claim_r1(R,Secret,ni);
 		claim_r2(R,Secret,nr);
@@ -42,20 +43,21 @@ protocol nsl3-broken(I,R)
 
 /* 
  * Needham-Schroeder-Lowe protocol,
- * fix version (wrong role name in first message)
+ * broken version (wrong role name in first message)
  */
 
 // The protocol description
 const V2: String;
+
 
 protocol nsl3-broken-fixed(I,R)
 {
 	role I
 	{
 		fresh ni: Nonce;
-		fresh nr: Nonce;
+		var nr: Nonce;
 
-		send_1(I,R, V2,{ni,R}pk(R) );
+		send_1(I,R,V2,  {ni,I}pk(R) );
 		recv_2(R,I, V2,{ni,nr,R}pk(I) );
 		send_3(I,R,V2, {nr}pk(R) );
 
@@ -65,14 +67,14 @@ protocol nsl3-broken-fixed(I,R)
 		claim_i4(I,Nisynch);
 	}	
 	
-	 role  R
+	role R
 	{
-		fresh ni: Nonce;
+		var ni: Nonce;
 		fresh nr: Nonce;
 
-		recv_1(I,R, V2,{ni,R}pk(R) );
+		recv_1(I,R, V2,{ni,I}pk(R) );
 		send_2(R,I,V2, {ni,nr,R}pk(I) );
-		recv_3(I,R,V2, {nr}pk(R) );
+		recv_3(I,R, V2,{nr}pk(R) );
 
 		claim_r1(R,Secret,ni);
 		claim_r2(R,Secret,nr);
@@ -80,4 +82,5 @@ protocol nsl3-broken-fixed(I,R)
 		claim_r4(R,Nisynch);
 	}
 }
+
 

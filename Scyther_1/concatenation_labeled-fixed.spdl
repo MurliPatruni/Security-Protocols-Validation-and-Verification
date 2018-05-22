@@ -4,6 +4,9 @@
  */
 
 // The protocol description
+usertype String;
+const V1: String;
+
 
 protocol nsl3-broken(I,R)
 {
@@ -12,9 +15,9 @@ protocol nsl3-broken(I,R)
 		fresh ni: Nonce;
 		var nr: Nonce;
 
-		send_1(I,R, {ni,R}pk(R) );
-		recv_2(R,I, {ni,nr,R}pk(I) );
-		send_3(I,R, {nr}pk(R) );
+		send_1(I,R,V1, {V1,ni,R}pk(R) );
+		recv_2(R,I,V1, {V1,ni,nr,R}pk(I) );
+		send_3(I,R, V1,{V1,nr}pk(R) );
 
 		claim_i1(I,Secret,ni);
 		claim_i2(I,Secret,nr);
@@ -27,9 +30,9 @@ protocol nsl3-broken(I,R)
 		var ni: Nonce;
 		fresh nr: Nonce;
 
-		recv_1(I,R, {ni,R}pk(R) );
-		send_2(R,I, {ni,nr,R}pk(I) );
-		recv_3(I,R, {nr}pk(R) );
+		recv_1(I,R,V1, {V1,ni,R}pk(R) );
+		send_2(R,I, V1,{V1,ni,nr,R}pk(I) );
+		recv_3(I,R, V1,{V1,nr}pk(R) );
 
 		claim_r1(R,Secret,ni);
 		claim_r2(R,Secret,nr);
@@ -44,6 +47,8 @@ protocol nsl3-broken(I,R)
  */
 
 // The protocol description
+const V2: String;
+
 
 protocol nsl3-broken-fixed(I,R)
 {
@@ -52,9 +57,9 @@ protocol nsl3-broken-fixed(I,R)
 		fresh ni: Nonce;
 		var nr: Nonce;
 
-		send_1(I,R, {ni,I}pk(R) );
-		recv_2(R,I, {ni,nr,R}pk(I) );
-		send_3(I,R, {nr}pk(R) );
+		send_1(I,R,V2,  {V2,ni,I}pk(R) );
+		recv_2(R,I, V2,{v2,ni,nr,R}pk(I) );
+		send_3(I,R,V2, {V2,nr}pk(R) );
 
 		claim_i1(I,Secret,ni);
 		claim_i2(I,Secret,nr);
@@ -67,9 +72,9 @@ protocol nsl3-broken-fixed(I,R)
 		var ni: Nonce;
 		fresh nr: Nonce;
 
-		recv_1(I,R, {ni,I}pk(R) );
-		send_2(R,I, {ni,nr,R}pk(I) );
-		recv_3(I,R, {nr}pk(R) );
+		recv_1(I,R, V2,{V2,ni,I}pk(R) );
+		send_2(R,I,V2, {V2,ni,nr,R}pk(I) );
+		recv_3(I,R, V2,{V2,nr}pk(R) );
 
 		claim_r1(R,Secret,ni);
 		claim_r2(R,Secret,nr);
